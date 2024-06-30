@@ -17,11 +17,15 @@ import craft_utils
 import imgproc
 import file_utils
 import json
+import gdown
 import zipfile
 
 from craft import CRAFT
 
 from collections import OrderedDict
+
+
+
 def copyStateDict(state_dict):
     if list(state_dict.keys())[0].startswith("module"):
         start_idx = 1
@@ -36,6 +40,12 @@ def copyStateDict(state_dict):
 def str2bool(v):
     return v.lower() in ("yes", "y", "true", "t", "1")
 
+weights = {
+    'craft_ic15_20k.pth': '1i2R7UIUqmkUtF0jv_3MXTqmQ_9wuAnLf',
+    'craft_mlt_25k.pth': '1Jk4eGD7crsqCCg9C9VjCLkMN3ze8kutZ',
+    'craft_refiner_CTW1500.pth': '1XSaFwBkOaFOdtk4Ane3DFyJGPRw6v5bO'
+}
+
 parser = argparse.ArgumentParser(description='CRAFT Text Detection')
 parser.add_argument('--trained_model', default='weights/craft_mlt_25k.pth', type=str, help='pretrained model')
 parser.add_argument('--text_threshold', default=0.7, type=float, help='text confidence threshold')
@@ -47,14 +57,29 @@ parser.add_argument('--mag_ratio', default=1.5, type=float, help='image magnific
 parser.add_argument('--poly', default=False, action='store_true', help='enable polygon type')
 parser.add_argument('--show_time', default=False, action='store_true', help='show processing time')
 parser.add_argument('--test_folder', default='/data/', type=str, help='folder path to input images')
+parser.add_argument('--image_path', default=None, type=str, help='path to a single input image')
 parser.add_argument('--refine', default=False, action='store_true', help='enable link refiner')
 parser.add_argument('--refiner_model', default='weights/craft_refiner_CTW1500.pth', type=str, help='pretrained refiner model')
 
 args = parser.parse_args()
 
+os.makedirs('weights', exist_ok=True)
 
-""" For test images in a folder """
-image_list, _, _ = file_utils.get_files(args.test_folder)
+# Check if the specified trained model exists, if not, download it
+model_file = os.path.basename(args.trained_model)
+if model_file in weights and not os.path.isfile(args.trained_model):
+    print(f"{model_file} not found. Downloading...")
+    url = f"https://drive.google.com/uc?id={weights[model_file]}"
+    gdown.download(url, args.trained_model, quiet=False)
+
+# Ensure the provided model path exists after download
+if not os.path.isfile(args.trained_model):
+    raise FileNotFoundError(f"Model file not found: {args.trained_model}")
+
+if args.image_path:
+    image_list = [args.image_path]
+else:
+    image_list, _, _ = file_utils.get_files(args.test_folder)
 
 result_folder = './result/'
 if not os.path.isdir(result_folder):
@@ -110,9 +135,6 @@ def test_net(net, image, text_threshold, link_threshold, low_text, cuda, poly, r
     if args.show_time : print("\ninfer/postproc time : {:.3f}/{:.3f}".format(t0, t1))
 
     return boxes, polys, ret_score_text
-
-
-
 if __name__ == '__main__':
     # load net
     net = CRAFT()     # initialize
