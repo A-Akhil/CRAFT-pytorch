@@ -4,7 +4,10 @@ import torch
 import torch.nn as nn
 import torch.nn.init as init
 from torchvision import models
-from torch.hub import load_state_dict_from_url
+
+model_urls = {
+    'vgg16_bn': 'https://download.pytorch.org/models/vgg16_bn-6c64b313.pth',
+}
 
 def init_weights(modules):
     for m in modules:
@@ -22,13 +25,8 @@ def init_weights(modules):
 class vgg16_bn(torch.nn.Module):
     def __init__(self, pretrained=True, freeze=True):
         super(vgg16_bn, self).__init__()
-        model_urls = {'vgg16_bn': 'https://download.pytorch.org/models/vgg16_bn-6c64b313.pth'}
-        vgg_pretrained_features = models.vgg16_bn(pretrained=False).features
-        
-        if pretrained:
-            state_dict = load_state_dict_from_url(model_urls['vgg16_bn'])
-            models.vgg16_bn(pretrained=False).load_state_dict(state_dict)
-        
+        model_urls['vgg16_bn'] = model_urls['vgg16_bn'].replace('https://', 'http://')
+        vgg_pretrained_features = models.vgg16_bn(pretrained=pretrained).features
         self.slice1 = torch.nn.Sequential()
         self.slice2 = torch.nn.Sequential()
         self.slice3 = torch.nn.Sequential()
