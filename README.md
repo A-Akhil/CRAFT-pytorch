@@ -16,6 +16,8 @@ PyTorch implementation for CRAFT text detector that effectively detect text area
 **13 Jun, 2019**: Initial update
 **20 Jul, 2019**: Added post-processing for polygon result
 **28 Sep, 2019**: Added the trained model on IC15 and the link refiner
+**30 Jun, 2024**: Can work with current Python version
+
 
 
 ## Getting started
